@@ -2,8 +2,8 @@
 import logging
 import base64
 from typing import Dict, Any, Optional
-from google import genai
-from google.genai import types
+import google.generativeai as genai
+from google.generativeai import types
 from .base import ImageGeneratorBase
 from ..utils.image_compressor import compress_image
 
