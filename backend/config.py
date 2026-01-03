@@ -1,6 +1,37 @@
 import logging
+import os
 import yaml
+import re
 from pathlib import Path
+from dotenv import load_dotenv
+
+# 加载 .env 文件
+load_dotenv()
+
+
+def substitute_env_vars(config_dict):
+    """
+    递归替换配置字典中的环境变量占位符
+    
+    Args:
+        config_dict: 配置字典
+        
+    Returns:
+        替换环境变量后的配置字典
+    """
+    if isinstance(config_dict, dict):
+        return {k: substitute_env_vars(v) for k, v in config_dict.items()}
+    elif isinstance(config_dict, list):
+        return [substitute_env_vars(item) for item in config_dict]
+    elif isinstance(config_dict, str):
+        # 使用正则表达式匹配 ${VAR_NAME} 格式的环境变量
+        def replace_var(match):
+            var_name = match.group(1)
+            return os.getenv(var_name, match.group(0))  # 如果环境变量不存在，保持原样
+        
+        return re.sub(r'\$\{([^}]+)\}', replace_var, config_dict)
+    else:
+        return config_dict
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +65,8 @@ class Config:
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 cls._image_providers_config = yaml.safe_load(f) or {}
+            # 替换环境变量
+            cls._image_providers_config = substitute_env_vars(cls._image_providers_config)
             logger.debug(f"图片配置加载成功: {list(cls._image_providers_config.get('providers', {}).keys())}")
         except yaml.YAMLError as e:
             logger.error(f"图片配置文件 YAML 格式错误: {e}")
@@ -68,6 +101,8 @@ class Config:
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 cls._text_providers_config = yaml.safe_load(f) or {}
+            # 替换环境变量
+            cls._text_providers_config = substitute_env_vars(cls._text_providers_config)
             logger.debug(f"文本配置加载成功: {list(cls._text_providers_config.get('providers', {}).keys())}")
         except yaml.YAMLError as e:
             logger.error(f"文本配置文件 YAML 格式错误: {e}")
