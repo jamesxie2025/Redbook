@@ -13,15 +13,28 @@ class OutlineService:
     def __init__(self):
         logger.debug("初始化 OutlineService...")
         # 使用全局配置管理器加载文本配置
-        self.text_config = {
-            'active_provider': Config.get_active_text_provider(),
-            'providers': {}
-        }
-        # 获取当前激活的提供商配置
         try:
-            active_provider_name = Config.get_active_text_provider()
-            provider_config = Config.get_text_provider_config(active_provider_name)
-            self.text_config['providers'][active_provider_name] = provider_config
+            # 加载完整的文本服务商配置
+            text_providers_config = Config.load_text_providers_config()
+            active_provider_name = text_providers_config.get('active_provider', 'google_gemini')
+            
+            # 构建简化的配置结构
+            self.text_config = {
+                'active_provider': active_provider_name,
+                'providers': {}
+            }
+            
+            # 获取当前激活的提供商配置
+            if active_provider_name in text_providers_config.get('providers', {}):
+                provider_config = text_providers_config['providers'][active_provider_name]
+                self.text_config['providers'][active_provider_name] = provider_config
+            else:
+                logger.error(f"文本服务商 [{active_provider_name}] 未找到")
+                raise ValueError(
+                    f"未找到文本生成服务商配置: {active_provider_name}\n"
+                    "解决方案：在系统设置中选择一个可用的服务商"
+                )
+                
         except Exception as e:
             logger.error(f"获取文本服务商配置失败: {e}")
             raise ValueError(
