@@ -1,7 +1,18 @@
 # 文本生成服务配置
 # 请在 Web 界面的"设置"页面中配置 API Key
-active_provider: deepseek
+active_provider: gpt4o
 providers:
+  # GPT-4o 通过 api.apiyi.com（支持图片上传）
+  gpt4o:
+    api_key: ${OPENAI_API_KEY}
+    base_url: https://api.apiyi.com
+    max_output_tokens: 8000
+    model: gpt-4o
+    temperature: 1
+    type: openai_compatible
+    supports_images: true
+  
+  # DeepSeek API（官方接口，不支持图片）
   deepseek:
     api_key: ${DEEPSEEK_API_KEY}
     base_url: https://api.deepseek.com
@@ -9,3 +20,4 @@ providers:
     model: deepseek-chat
     temperature: 1
     type: openai_compatible
+    supports_images: false

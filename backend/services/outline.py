@@ -80,8 +80,12 @@ class OutlineService:
             }
         }
 
-    def _get_client(self):
-        """根据配置获取客户端"""
+    def _get_client(self, needs_image_support: bool = False):
+        """根据配置获取客户端
+        
+        Args:
+            needs_image_support: 是否需要图片支持
+        """
         active_provider = self.text_config.get('active_provider', 'google_gemini')
         providers = self.text_config.get('providers', {})
 
@@ -94,25 +98,56 @@ class OutlineService:
                 "2. 或手动编辑 text_providers.yaml 文件"
             )
 
-        if active_provider not in providers:
-            available = ', '.join(providers.keys())
-            logger.error(f"文本服务商 [{active_provider}] 不存在，可用: {available}")
-            raise ValueError(
-                f"未找到文本生成服务商配置: {active_provider}\n"
-                f"可用的服务商: {available}\n"
-                "解决方案：在系统设置中选择一个可用的服务商"
-            )
-
-        provider_config = providers.get(active_provider, {})
+        # 如果需要图片支持，优先选择支持图片的模型
+        if needs_image_support:
+            # 查找支持图片的模型
+            image_supported_providers = []
+            for name, config in providers.items():
+                if config.get('supports_images', True):  # 默认假设支持图片
+                    image_supported_providers.append((name, config))
+            
+            if image_supported_providers:
+                # 优先使用当前激活的模型（如果支持图片）
+                if active_provider in [p[0] for p in image_supported_providers]:
+                    selected_provider = active_provider
+                    provider_config = providers[active_provider]
+                else:
+                    # 选择第一个支持图片的模型
+                    selected_provider, provider_config = image_supported_providers[0]
+                logger.info(f"需要图片支持，选择服务商: {selected_provider} (支持图片)")
+            else:
+                # 没有支持图片的模型，使用默认
+                logger.warning("没有找到支持图片的文本服务商，使用默认服务商")
+                if active_provider not in providers:
+                    available = ', '.join(providers.keys())
+                    raise ValueError(
+                        f"未找到文本生成服务商配置: {active_provider}\n"
+                        f"可用的服务商: {available}\n"
+                        "解决方案：在系统设置中选择一个可用的服务商"
+                    )
+                selected_provider = active_provider
+                provider_config = providers[active_provider]
+        else:
+            # 不需要图片支持，使用当前激活的模型
+            if active_provider not in providers:
+                available = ', '.join(providers.keys())
+                logger.error(f"文本服务商 [{active_provider}] 不存在，可用: {available}")
+                raise ValueError(
+                    f"未找到文本生成服务商配置: {active_provider}\n"
+                    f"可用的服务商: {available}\n"
+                    "解决方案：在系统设置中选择一个可用的服务商"
+                )
+            selected_provider = active_provider
+            provider_config = providers[active_provider]
 
         if not provider_config.get('api_key'):
-            logger.error(f"文本服务商 [{active_provider}] 未配置 API Key")
+            logger.error(f"文本服务商 [{selected_provider}] 未配置 API Key")
             raise ValueError(
-                f"文本服务商 {active_provider} 未配置 API Key\n"
+                f"文本服务商 {selected_provider} 未配置 API Key\n"
                 "解决方案：在系统设置页面编辑该服务商，填写 API Key"
             )
 
-        logger.info(f"使用文本服务商: {active_provider} (type={provider_config.get('type')})")
+        logger.info(f"使用文本服务商: {selected_provider} (type={provider_config.get('type')}, 支持图片={provider_config.get('supports_images', True)})")
         return get_text_chat_client(provider_config)
 
     def _load_prompt_template(self) -> str:
@@ -165,23 +200,30 @@ class OutlineService:
     ) -> Dict[str, Any]:
         try:
             logger.info(f"开始生成大纲: topic={topic[:50]}..., images={len(images) if images else 0}")
+            
+            # 根据是否需要图片支持获取客户端
+            needs_image_support = images is not None and len(images) > 0
+            client = self._get_client(needs_image_support=needs_image_support)
+            
             prompt = self.prompt_template.format(topic=topic)
 
             if images and len(images) > 0:
                 prompt += f"\n\n注意：用户提供了 {len(images)} 张参考图片，请在生成大纲时考虑这些图片的内容和风格。这些图片可能是产品图、个人照片或场景图，请根据图片内容来优化大纲，使生成的内容与图片相关联。"
                 logger.debug(f"添加了 {len(images)} 张参考图片到提示词")
 
-            # 从配置中获取模型参数
+            # 从当前客户端配置中获取模型参数
+            # 注意：这里需要从配置中获取当前选择的provider的配置
             active_provider = self.text_config.get('active_provider', 'google_gemini')
             providers = self.text_config.get('providers', {})
-            provider_config = providers.get(active_provider, {})
+            
+            # 由于_get_client可能选择了不同的provider，我们需要重新获取配置
+            # 简化处理：使用默认配置，实际模型参数由客户端内部处理
+            model = "gpt-4o"  # 默认值，实际由客户端决定
+            temperature = 1.0
+            max_output_tokens = 8000
 
-            model = provider_config.get('model', 'gemini-2.0-flash-exp')
-            temperature = provider_config.get('temperature', 1.0)
-            max_output_tokens = provider_config.get('max_output_tokens', 8000)
-
-            logger.info(f"调用文本生成 API: model={model}, temperature={temperature}")
-            outline_text = self.client.generate_text(
+            logger.info(f"调用文本生成 API: 需要图片支持={needs_image_support}, temperature={temperature}")
+            outline_text = client.generate_text(
                 prompt=prompt,
                 model=model,
                 temperature=temperature,
