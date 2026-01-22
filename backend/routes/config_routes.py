@@ -39,17 +39,23 @@ def create_config_blueprint():
           - image_generation: 图片生成配置
         """
         try:
+            from backend.config import substitute_env_vars
+            
             # 读取图片生成配置
             image_config = _read_config(IMAGE_CONFIG_PATH, {
                 'active_provider': 'google_genai',
                 'providers': {}
             })
+            # 替换环境变量占位符
+            image_config = substitute_env_vars(image_config)
 
             # 读取文本生成配置
             text_config = _read_config(TEXT_CONFIG_PATH, {
                 'active_provider': 'google_gemini',
                 'providers': {}
             })
+            # 替换环境变量占位符
+            text_config = substitute_env_vars(text_config)
 
             return jsonify({
                 "success": True,
@@ -250,6 +256,8 @@ def _load_provider_config(provider_type: str, provider_name: str, config: dict) 
     Returns:
         dict: 合并后的配置
     """
+    from backend.config import substitute_env_vars
+    
     # 确定配置文件路径
     if provider_type in ['openai_compatible', 'google_gemini']:
         config_path = TEXT_CONFIG_PATH
@@ -259,6 +267,8 @@ def _load_provider_config(provider_type: str, provider_name: str, config: dict) 
     if config_path.exists():
         with open(config_path, 'r', encoding='utf-8') as f:
             yaml_config = yaml.safe_load(f) or {}
+            # 替换环境变量占位符
+            yaml_config = substitute_env_vars(yaml_config)
             providers = yaml_config.get('providers', {})
 
             if provider_name in providers:
@@ -304,7 +314,11 @@ def _test_provider_connection(provider_type: str, config: dict) -> dict:
 
 def _test_google_genai(config: dict) -> dict:
     """测试 Google GenAI 图片生成服务"""
-    from google import genai
+    import google.generativeai as genai
+    from backend.config import substitute_env_vars
+
+    # 替换环境变量占位符
+    config = substitute_env_vars(config)
 
     if config.get('base_url'):
         client = genai.Client(
@@ -333,7 +347,11 @@ def _test_google_genai(config: dict) -> dict:
 
 def _test_google_gemini(config: dict, test_prompt: str) -> dict:
     """测试 Google Gemini 文本生成服务"""
-    from google import genai
+    import google.generativeai as genai
+    from backend.config import substitute_env_vars
+
+    # 替换环境变量占位符
+    config = substitute_env_vars(config)
 
     if config.get('base_url'):
         client = genai.Client(
@@ -363,7 +381,11 @@ def _test_google_gemini(config: dict, test_prompt: str) -> dict:
 def _test_openai_compatible(config: dict, test_prompt: str) -> dict:
     """测试 OpenAI 兼容接口"""
     import requests
+    from backend.config import substitute_env_vars
 
+    # 替换环境变量占位符
+    config = substitute_env_vars(config)
+    
     base_url = config['base_url'].rstrip('/').rstrip('/v1') if config.get('base_url') else 'https://api.openai.com'
     url = f"{base_url}/v1/chat/completions"
 
@@ -395,7 +417,11 @@ def _test_openai_compatible(config: dict, test_prompt: str) -> dict:
 def _test_image_api(config: dict) -> dict:
     """测试图片 API 连接"""
     import requests
+    from backend.config import substitute_env_vars
 
+    # 替换环境变量占位符
+    config = substitute_env_vars(config)
+    
     base_url = config['base_url'].rstrip('/').rstrip('/v1') if config.get('base_url') else 'https://api.openai.com'
     url = f"{base_url}/v1/models"
 

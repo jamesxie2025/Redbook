@@ -156,7 +156,13 @@ cp text_providers.yaml.example text_providers.yaml
 cp image_providers.yaml.example image_providers.yaml
 ```
 
-编辑配置文件，填入你的 API Key 和服务配置。也可以启动后在 Web 界面的**设置页面**进行配置。
+有两种方式配置 API 服务：
+
+1. **环境变量配置（推荐）**：在项目根目录创建 `.env` 文件，填入您的 API 密钥和其他配置。项目会自动读取这些环境变量。
+
+2. **直接编辑配置文件**：编辑 `text_providers.yaml` 和 `image_providers.yaml` 文件，填入您的 API Key 和服务配置。
+
+您也可以启动后在 Web 界面的**设置页面**进行配置。
 
 ### 3. 安装后端依赖
 ```bash

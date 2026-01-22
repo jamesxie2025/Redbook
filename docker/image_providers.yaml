@@ -1,10 +1,11 @@
 # 图片生成服务配置
 # 请在 Web 界面的"设置"页面中配置 API Key
-active_provider: default
+active_provider: nanobanana
 providers:
-  default:
-    api_key: ""
-    base_url: https://api.openai.com/v1
+  nanobanana:
+    api_key: ${NANO_BANANA_API_KEY}
+    base_url: https://api.apiyi.com
     high_concurrency: false
-    model: dall-e-3
+    model: nano-banana-pro
     type: image_api
+    endpoint_type: /v1/chat/completions  # Nano Banana Pro使用chat接口

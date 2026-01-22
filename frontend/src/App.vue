@@ -3,7 +3,7 @@
     <!-- 侧边栏 Sidebar -->
     <aside class="layout-sidebar">
       <div class="logo-area">
-        <img src="/logo-banner.png" alt="红墨 - 灵感一触即发" class="logo-icon" />
+        <img src="/logo-banner.png" alt="米协尔 - 灵感一触即发" class="logo-icon" />
       </div>
       
       <nav class="nav-menu">
@@ -25,8 +25,8 @@
         <div style="display: flex; align-items: center; gap: 10px;">
           <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, #ff6b6b 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px;">墨</div>
           <div>
-            <div style="font-size: 14px; font-weight: 600;">默子</div>
-            <div style="font-size: 12px; color: var(--text-sub);">mozi</div>
+            <div style="font-size: 14px; font-weight: 600;">米协尔</div>
+            <div style="font-size: 12px; color: var(--text-sub);">michelle</div>
           </div>
         </div>
       </div>

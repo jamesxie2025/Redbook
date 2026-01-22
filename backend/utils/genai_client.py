@@ -2,8 +2,8 @@
 import time
 import random
 from functools import wraps
-from google import genai
-from google.genai import types
+import google.generativeai as genai
+from google.generativeai import types
 
 # 导入统一的错误解析函数
 from ..generators.google_genai import parse_genai_error

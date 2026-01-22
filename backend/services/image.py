@@ -186,7 +186,7 @@ class ImageService:
                     prompt=prompt,
                     aspect_ratio=self.provider_config.get('default_aspect_ratio', '3:4'),
                     temperature=self.provider_config.get('temperature', 1.0),
-                    model=self.provider_config.get('model', 'nano-banana-2'),
+                    model=self.provider_config.get('model', 'nano-banana-pro'),
                     reference_images=reference_images if reference_images else None,
                 )
             else:
