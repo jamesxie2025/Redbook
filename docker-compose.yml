@@ -1,14 +1,28 @@
+version: '3.8'
+
 services:
-  redink:
-    image: histonemax/redink:latest
-    container_name: redink
+  redbook:
+    image: redbook-fixed:latest
+    container_name: redbook
     ports:
       - "12398:12398"
     volumes:
       # 持久化数据目录
       - ./history:/app/history
       - ./output:/app/output
-      # 可选：挂载自定义配置文件
-      # - ./text_providers.yaml:/app/text_providers.yaml
-      # - ./image_providers.yaml:/app/image_providers.yaml
+      # 挂载自定义配置文件
+      - ./text_providers.yaml:/app/text_providers.yaml
+      - ./image_providers.yaml:/app/image_providers.yaml
+      # 环境文件
+      - ./.env:/app/.env
+    environment:
+      - PYTHONUNBUFFERED=1
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:12398/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# 注意：redink服务已移除，如果需要n8n服务，请使用单独的docker-compose文件
